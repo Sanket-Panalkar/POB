@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LED Pixel Transparency Studio – Interaktv</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #080c10;
+    --panel: #0d1520;
+    --panel2: #111d2e;
+    --border: #1a3050;
+    --accent: #00d4ff;
+    --accent2: #00ff9d;
+    --warn: #ff6b35;
+    --text: #c8dff0;
+    --text-dim: #4a7090;
+    --text-bright: #e8f4ff;
+    --step-active: #00d4ff;
+    --step-done: #00ff9d;
+    --btn-bg: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+    --btn-hover: linear-gradient(135deg, #00eeff 0%, #00b8e6 100%);
+    --shadow: 0 0 20px rgba(0,212,255,0.15);
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ─── HEADER ─────────────────────────────── */
+  header {
+    background: linear-gradient(90deg, #050d18 0%, #0d1a2e 50%, #050d18 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo-svg {
+    height: 38px;
+    width: auto;
+  }
+
+  .version-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+  }
+
+  /* ─── LAYOUT ─────────────────────────────── */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: calc(100vh - 58px);
+  }
+
+  /* ─── SIDEBAR ─────────────────────────────── */
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ─── STEP ─────────────────────────────── */
+  .step {
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .step-num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1.5px solid var(--text-dim);
+    color: var(--text-dim);
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+
+  .step.active .step-num { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 8px rgba(0,212,255,0.4); }
+  .step.done .step-num { border-color: var(--step-done); color: var(--step-done); background: rgba(0,255,157,0.1); }
+
+  .step-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 700;
+    transition: color 0.3s;
+  }
+
+  .step.active .step-title { color: var(--accent); }
+  .step.done .step-title { color: var(--step-done); }
+
+  .step-content {
+    display: none;
+    padding: 4px 16px 16px;
+  }
+  .step.active .step-content { display: block; }
+
+  /* ─── FORM ELEMENTS ─────────────────────────────── */
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    margin-top: 12px;
+  }
+
+  input[type="number"], select {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text-bright);
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="number"]:focus, select:focus { border-color: var(--accent); }
+
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* ─── TOGGLE GROUP ─────────────────────────────── */
+  .toggle-group {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    background: var(--panel2);
+    border: 1.5px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 6px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-align: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+
+  .toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .toggle-btn.selected { background: rgba(0,212,255,0.12); border-color: var(--accent); color: var(--accent); box-shadow: inset 0 0 10px rgba(0,212,255,0.08); }
+
+  .toggle-icon { font-size: 18px; }
+
+  /* ─── PITCH GRID ─────────────────────────────── */
+  .pitch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .pitch-card {
+    background: var(--panel2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .pitch-card:hover { border-color: var(--accent); }
+  .pitch-card.selected { background: rgba(0,212,255,0.1); border-color: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,0.2); }
+
+  .pitch-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .pitch-card.selected .pitch-name { color: #00eeff; }
+
+  .pitch-detail {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .custom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+
+  /* ─── CORNER RADIUS SLIDER ─────────────────────────────── */
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    margin-top: 4px;
+  }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* ─── UPLOAD ZONE ─────────────────────────────── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    background: rgba(0,0,0,0.2);
+  }
+
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+
+  .upload-zone.has-file {
+    border-color: var(--step-done);
+    background: rgba(0,255,157,0.05);
+  }
+
+  .upload-icon { font-size: 24px; margin-bottom: 8px; }
+  .upload-text { font-size: 12px; color: var(--text-dim); }
+  .upload-sub { font-size: 10px; color: var(--text-dim); margin-top: 4px; font-family: 'Share Tech Mono', monospace; }
+
+  /* ─── BUTTONS ─────────────────────────────── */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 14px;
+    background: var(--btn-bg);
+    border: none;
+    border-radius: var(--radius);
+    color: #001a2e;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+  }
+
+  .btn:hover { background: var(--btn-hover); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,212,255,0.3); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-generate {
+    background: linear-gradient(135deg, #00ff9d, #00cc7a);
+    color: #001a10;
+    margin-top: 8px;
+  }
+
+  .btn-generate:hover { background: linear-gradient(135deg, #22ffb0, #00e688); }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 10px;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.05); }
+
+  /* ─── INFO BOX ─────────────────────────────── */
+  .info-box {
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    line-height: 1.6;
+  }
+
+  .info-box b { color: var(--accent); }
+
+  /* ─── MAIN CANVAS AREA ─────────────────────────────── */
+  .canvas-area {
+    display: flex;
+    flex-direction: column;
+    background: #050a0f;
+    overflow: hidden;
+  }
+
+  .canvas-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .canvas-stat {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .canvas-stat span { color: var(--accent); }
+  .canvas-stat.ok span { color: var(--step-done); }
+
+  .canvas-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 20px;
+    position: relative;
+  }
+
+  #mainCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated;
+    border: 1px solid var(--border);
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+  }
+
+  .canvas-placeholder {
+    text-align: center;
+    color: var(--text-dim);
+  }
+
+  .canvas-placeholder .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .canvas-placeholder p { font-size: 13px; max-width: 280px; line-height: 1.6; }
+
+  /* ─── STATUS BAR ─────────────────────────────── */
+  .status-bar {
+    background: #040a12;
+    border-top: 1px solid var(--border);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat-chip {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+
+  .stat-chip b { color: var(--text-bright); }
+  .stat-chip.highlight b { color: var(--accent); }
+
+  /* ─── HOLE REPORT ─────────────────────────────── */
+  .hole-report {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(5, 15, 28, 0.92);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    width: 200px;
+    backdrop-filter: blur(8px);
+    display: none;
+  }
+
+  .hole-report.visible { display: block; }
+
+  .hole-report-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hole-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .hole-label { color: var(--text-dim); }
+  .hole-val { color: var(--text-bright); font-weight: bold; }
+  .hole-total { color: var(--accent); font-size: 18px; font-family: 'Orbitron', monospace; font-weight: 900; margin-top: 8px; }
+  .hole-total-label { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
+
+  /* ─── EXPORT MODAL ─────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    width: 420px;
+    max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .modal-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .modal-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.5; }
+
+  .format-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .format-btn {
+    background: var(--panel2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .format-btn:hover { border-color: var(--accent); }
+  .format-btn.selected { border-color: var(--accent); background: rgba(0,212,255,0.1); }
+
+  .format-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  .format-detail { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
+
+  .modal-actions { display: flex; gap: 10px; }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    flex: 1;
+  }
+
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-export {
+    flex: 2;
+    background: var(--btn-bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    color: #001a2e;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-export:hover { background: var(--btn-hover); }
+
+  /* ─── PROGRESS ─────────────────────────────── */
+  .progress-bar {
+    display: none;
+    margin-top: 10px;
+  }
+
+  .progress-bar.visible { display: block; }
+
+  .progress-track {
+    height: 4px;
+    background: var(--panel2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.1s;
+    width: 0%;
+  }
+
+  .progress-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ─── BOTTOM SIDEBAR ACTIONS ─────────────────────────────── */
+  .sidebar-actions {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+    position: sticky;
+    bottom: 0;
+  }
+
+  /* ─── RESPONSIVE ─────────────────────────────── */
+  @media (max-width: 900px) {
+    .app-layout {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      height: auto;
+      min-height: calc(100vh - 58px);
+    }
+
+    .sidebar {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      max-height: 60vh;
+    }
+
+    .canvas-area {
+      min-height: 50vh;
+    }
+  }
+
+  @media (max-width: 480px) {
+    header { padding: 8px 12px; }
+    .logo-svg { height: 28px; }
+    .step-content { padding: 4px 12px 12px; }
+    .step-header { padding: 10px 12px; }
+    .pitch-grid { grid-template-columns: 1fr 1fr; gap: 4px; }
+    .modal { padding: 20px; }
+  }
+
+  /* ─── LOADING SPINNER ─────────────────────────────── */
+  .spinner {
+    display: none;
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5,10,15,0.7);
+    z-index: 10;
+    flex-direction: column;
+    gap: 16px;
+    backdrop-filter: blur(2px);
+  }
+
+  .spinner.show { display: flex; }
+
+  .spin-ring {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .spin-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .fit-select { margin-top: 8px; }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    margin-top: 14px;
+    padding-top: 10px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <svg class="logo-svg" viewBox="0 0 320 50" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#6633ff"/>
+        <stop offset="40%" style="stop-color:#ff44aa"/>
+        <stop offset="70%" style="stop-color:#ff6633"/>
+        <stop offset="100%" style="stop-color:#4466ff"/>
+      </linearGradient>
+    </defs>
+    <text x="4" y="38" font-family="Arial Black, sans-serif" font-size="40" font-weight="900"
+          fill="url(#logoGrad)" stroke="white" stroke-width="1.5" paint-order="stroke">interaktv</text>
+    <text x="200" y="48" font-family="Georgia, serif" font-size="11" font-style="italic" fill="#aaa">Beyond Reality.</text>
+  </svg>
+  <div class="version-badge">V2.0 // PROFESSIONAL</div>
+</header>
+
+<!-- APP LAYOUT -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+
+    <!-- STEP 1: Orientation -->
+    <div class="step active" id="step1">
+      <div class="step-header" onclick="toggleStep(1)">
+        <div class="step-num">1</div>
+        <div class="step-title">Canvas Orientation</div>
+      </div>
+      <div class="step-content">
+        <label>Aspect Ratio</label>
+        <div class="toggle-group">
+          <button class="toggle-btn selected" onclick="setOrientation('landscape',this)">
+            <div class="toggle-icon">▬</div> LANDSCAPE
+          </button>
+          <button class="toggle-btn" onclick="setOrientation('portrait',this)">
+            <div class="toggle-icon">▮</div> PORTRAIT
+          </button>
+          <button class="toggle-btn" onclick="setOrientation('square',this)">
+            <div class="toggle-icon">■</div> SQUARE
+          </button>
+        </div>
+        <label>Unit System</label>
+        <select id="unitSelect" onchange="updateUnit()">
+          <option value="mm">Millimeters (mm)</option>
+          <option value="in">Inches (in)</option>
+          <option value="px">Pixels (px)</option>
+        </select>
+        <button class="btn" onclick="goStep(2)">NEXT → DIMENSIONS</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Dimensions -->
+    <div class="step" id="step2">
+      <div class="step-header" onclick="toggleStep(2)">
+        <div class="step-num">2</div>
+        <div class="step-title">Canvas Dimensions</div>
+      </div>
+      <div class="step-content">
+        <div class="input-row">
+          <div>
+            <label id="wLabel">Width (mm)</label>
+            <input type="number" id="canvasW" value="320" min="1" oninput="updateDotInfo()">
+          </div>
+          <div>
+            <label id="hLabel">Height (mm)</label>
+            <input type="number" id="canvasH" value="160" min="1" oninput="updateDotInfo()">
+          </div>
+        </div>
+        <label>DPI (for pixel output)</label>
+        <select id="dpiSelect">
+          <option value="72">72 dpi — Screen</option>
+          <option value="150">150 dpi — Web</option>
+          <option value="300" selected>300 dpi — Print</option>
+          <option value="600">600 dpi — High Quality</option>
+        </select>
+        <div class="info-box" id="dimInfo">
+          <b>100 × 80</b> = 8,000 LED dots at 2mm pitch
+        </div>
+        <button class="btn" onclick="goStep(3)">NEXT → LED TYPE</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: LED Pixel Type -->
+    <div class="step" id="step3">
+      <div class="step-header" onclick="toggleStep(3)">
+        <div class="step-num">3</div>
+        <div class="step-title">LED Pixel Type</div>
+      </div>
+      <div class="step-content">
+        <label>Select LED Pitch</label>
+        <div class="pitch-grid">
+          <div class="pitch-card" onclick="selectPitch(1,0.75,this)">
+            <div class="pitch-name">P1</div>
+            <div class="pitch-detail">1MM PITCH<br>Dot: 0.75×0.75mm</div>
+          </div>
+          <div class="pitch-card" onclick="selectPitch(1.5,1,this)">
+            <div class="pitch-name">P1.5</div>
+            <div class="pitch-detail">1.5MM PITCH<br>Dot: 1×1mm</div>
+          </div>
+          <div class="pitch-card selected" onclick="selectPitch(2,1.5,this)">
+            <div class="pitch-name">P2</div>
+            <div class="pitch-detail">2MM PITCH<br>Dot: 1.5×1.5mm<br>SMD1515</div>
+          </div>
+          <div class="pitch-card" onclick="selectPitch(2.5,2,this)">
+            <div class="pitch-name">P2.5</div>
+            <div class="pitch-detail">2.5MM PITCH<br>Dot: 2×2mm</div>
+          </div>
+          <div class="pitch-card" onclick="selectPitch(3,2,this)">
+            <div class="pitch-name">P3</div>
+            <div class="pitch-detail">3MM PITCH<br>Dot: 2×2mm</div>
+          </div>
+          <div class="pitch-card" onclick="selectPitch(4,3,this)">
+            <div class="pitch-name">P4</div>
+            <div class="pitch-detail">4MM PITCH<br>Dot: 3×3mm</div>
+          </div>
+          <div class="pitch-card" onclick="selectPitch(5,3.5,this)">
+            <div class="pitch-name">P5</div>
+            <div class="pitch-detail">5MM PITCH<br>Dot: 3.5×3.5mm</div>
+          </div>
+          <div class="pitch-card" onclick="selectPitch(6,4,this)">
+            <div class="pitch-name">P6</div>
+            <div class="pitch-detail">6MM PITCH<br>Dot: 4×4mm</div>
+          </div>
+        </div>
+        <div class="section-label">— or custom —</div>
+        <div class="custom-row">
+          <div>
+            <label>Pitch (mm)</label>
+            <input type="number" id="customPitch" value="2" min="0.5" step="0.5" oninput="setCustomPitch()">
+          </div>
+          <div>
+            <label>Dot Size (mm)</label>
+            <input type="number" id="customDot" value="1.5" min="0.1" step="0.1" oninput="setCustomPitch()">
+          </div>
+        </div>
+        <div class="info-box" id="pitchInfo">
+          <b>P2: 2mm pitch, 1.5×1.5mm LED dot</b>
+        </div>
+        <button class="btn" onclick="goStep(4)">NEXT → DOT SHAPE</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Dot Shape -->
+    <div class="step" id="step4">
+      <div class="step-header" onclick="toggleStep(4)">
+        <div class="step-num">4</div>
+        <div class="step-title">Dot Shape</div>
+      </div>
+      <div class="step-content">
+        <label>Transparency Cutout Shape</label>
+        <div class="toggle-group">
+          <button class="toggle-btn selected" onclick="setShape('square',this)">
+            <div class="toggle-icon">⬛</div> CUBE / SQUARE
+          </button>
+          <button class="toggle-btn" onclick="setShape('circle',this)">
+            <div class="toggle-icon">⚫</div> CIRCLE / ROUND
+          </button>
+        </div>
+        <label>Corner Radius (for square only)</label>
+        <input type="range" id="radiusSlider" min="0" max="50" value="10" oninput="updateRadius(this.value)">
+        <div class="range-labels">
+          <span>Sharp</span>
+          <span id="radiusVal">10%</span>
+          <span>Full Round</span>
+        </div>
+        <button class="btn" onclick="goStep(5)">NEXT → UPLOAD IMAGE</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: Upload Image -->
+    <div class="step" id="step5">
+      <div class="step-header" onclick="toggleStep(5)">
+        <div class="step-num">5</div>
+        <div class="step-title">Upload Source Image</div>
+      </div>
+      <div class="step-content">
+        <div class="info-box">
+          Upload the image to apply LED transparency to. Canvas: <b id="canvasSizeLabel">320.0×160.0mm</b>
+        </div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+             ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+          <div class="upload-icon" id="uploadIcon">📁</div>
+          <div class="upload-text" id="uploadText">Drop image here or click to browse</div>
+          <div class="upload-sub" id="uploadSub">PNG, JPG, WebP, BMP supported</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="loadFile(event)">
+        <label>Image Fit Mode</label>
+        <select id="fitMode" class="fit-select">
+          <option value="cover">Cover (fill canvas, crop if needed)</option>
+          <option value="contain">Contain (fit inside, letterbox)</option>
+          <option value="stretch">Stretch (fill exactly)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- GENERATE -->
+    <div class="sidebar-actions">
+      <button class="btn btn-generate" id="btnGenerate" onclick="generateLED()">⚡ Generate LED Pattern</button>
+      <button class="btn btn-secondary" id="btnSave" onclick="openExport()" disabled>💾 Save / Export</button>
+      <button class="btn btn-secondary" id="btnSaveSep" onclick="openSeparateExport()" disabled>🗂 Save Separately (320×160mm)</button>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- CANVAS AREA -->
+  <div class="canvas-area" id="canvasArea">
+    <div class="canvas-toolbar">
+      <div class="canvas-stat">CANVAS: <span id="statCanvas">—</span></div>
+      <div class="canvas-stat">LED PITCH: <span id="statPitch">P2 / 2mm</span></div>
+      <div class="canvas-stat">DOT SIZE: <span id="statDot">1.5×1.5mm</span></div>
+      <div class="canvas-stat">DOTS/CANVAS: <span id="statDots">—</span></div>
+      <div class="canvas-stat">SHAPE: <span id="statShape">Square</span></div>
+      <div class="canvas-stat ok">STATUS: <span id="statStatus">Ready</span></div>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <div class="canvas-placeholder" id="placeholder">
+        <div class="icon">◈</div>
+        <p>Configure settings in the panel, then upload your image to generate the LED transparency pattern.</p>
+      </div>
+      <canvas id="mainCanvas" style="display:none"></canvas>
+      <div class="spinner" id="spinner">
+        <div class="spin-ring"></div>
+        <div class="spin-text" id="spinText">GENERATING…</div>
+      </div>
+      <!-- HOLE REPORT -->
+      <div class="hole-report" id="holeReport">
+        <div class="hole-report-title">Hole Count Report</div>
+        <div class="hole-row"><span class="hole-label">Horizontal dots</span><span class="hole-val" id="hrH">—</span></div>
+        <div class="hole-row"><span class="hole-label">Vertical dots</span><span class="hole-val" id="hrV">—</span></div>
+        <div class="hole-row"><span class="hole-label">Grid</span><span class="hole-val" id="hrGrid">—</span></div>
+        <div class="hole-row"><span class="hole-label">Pitch</span><span class="hole-val" id="hrPitch">—</span></div>
+        <div class="hole-row"><span class="hole-label">Dot size</span><span class="hole-val" id="hrDot">—</span></div>
+        <div class="hole-row"><span class="hole-label">Canvas</span><span class="hole-val" id="hrCanvas">—</span></div>
+        <div class="hole-total-label">TOTAL TRANSPARENT HOLES</div>
+        <div class="hole-total" id="hrTotal">—</div>
+        <div class="hole-total-label">square transparent holes punched</div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="stat-chip">CANVAS: <b id="sb1">320×160mm</b></div>
+      <div class="stat-chip">LED PITCH: <b id="sb2">P2 / 2mm</b></div>
+      <div class="stat-chip">DOT SIZE: <b id="sb3">1.5×1.5mm</b></div>
+      <div class="stat-chip">DOTS/CANVAS: <b id="sb4">160 × 80 = 12,800</b></div>
+      <div class="stat-chip">SHAPE: <b id="sb5">Square</b></div>
+      <div class="stat-chip highlight">STATUS: <b id="sb6">Ready</b></div>
+    </div>
+  </div>
+
+</div><!-- /app-layout -->
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal-title">Export Image</div>
+    <div class="modal-sub">Choose format. PNG & TIFF preserve transparency (alpha channel). JPG/WebP are smaller but opaque.</div>
+    <div class="format-grid">
+      <div class="format-btn selected" onclick="selectFormat('png',this)">
+        <div class="format-name">PNG</div>
+        <div class="format-detail">Lossless Transparency</div>
+      </div>
+      <div class="format-btn" onclick="selectFormat('jpg',this)">
+        <div class="format-name">JPG</div>
+        <div class="format-detail">Lossy, No Alpha</div>
+      </div>
+      <div class="format-btn" onclick="selectFormat('webp',this)">
+        <div class="format-name">WebP</div>
+        <div class="format-detail">Modern Transparency</div>
+      </div>
+      <div class="format-btn" onclick="selectFormat('tiff',this)">
+        <div class="format-name">TIFF</div>
+        <div class="format-detail">High Quality Transparency</div>
+      </div>
+      <div class="format-btn" onclick="selectFormat('bmp',this)">
+        <div class="format-name">BMP</div>
+        <div class="format-detail">Uncompressed, No Alpha</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeExport()">CANCEL</button>
+      <button class="btn-export" onclick="doExport()">DOWNLOAD</button>
+    </div>
+    <div class="progress-bar" id="exportProgress">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">Preparing…</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEPARATE EXPORT MODAL -->
+<div class="modal-overlay" id="sepExportModal">
+  <div class="modal">
+    <div class="modal-title">Save Separately</div>
+    <div class="modal-sub" id="sepModalSub">Divides the canvas into 320×160mm sections and saves each as a separate PNG file.</div>
+    <div id="sepInfo" class="info-box" style="margin-bottom:16px"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSepExport()">CANCEL</button>
+      <button class="btn-export" onclick="doSeparateExport()">DOWNLOAD ALL SECTIONS</button>
+    </div>
+    <div class="progress-bar" id="sepProgress">
+      <div class="progress-track"><div class="progress-fill" id="sepFill"></div></div>
+      <div class="progress-text" id="sepText">Preparing sections…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ─────────────────────────────────────────
+const state = {
+  orientation: 'landscape',
+  unit: 'mm',
+  width: 320,
+  height: 160,
+  dpi: 300,
+  pitch: 2,
+  dotSize: 1.5,
+  shape: 'square',
+  cornerRadius: 10,
+  fitMode: 'cover',
+  sourceImage: null,
+  generated: false,
+  exportFormat: 'png',
+  outputCanvas: null,
+  // render scale: canvas pixels per mm
+  pxPerMm: 4  // default: 4px per mm = 320mm → 1280px (manageable)
+};
+
+// RENDER RESOLUTION: cap at reasonable size to avoid white screen
+const MAX_CANVAS_PX = 4096;
+
+// ─── STEP NAVIGATION ─────────────────────────────────────────
+function toggleStep(n) {
+  const s = document.getElementById('step' + n);
+  if (s.classList.contains('active')) return;
+  goStep(n);
+}
+
+function goStep(n) {
+  for (let i = 1; i <= 5; i++) {
+    const s = document.getElementById('step' + i);
+    s.classList.remove('active');
+    if (i < n) s.classList.add('done');
+    else s.classList.remove('done');
+  }
+  document.getElementById('step' + n).classList.add('active');
+  document.getElementById('step' + n).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (n === 5) updateCanvasSizeLabel();
+  updateStatusBar();
+}
+
+// ─── STEP 1 ─────────────────────────────────────────
+function setOrientation(o, btn) {
+  state.orientation = o;
+  document.querySelectorAll('#step1 .toggle-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  // Auto-set reasonable defaults
+  const w = Number(document.getElementById('canvasW').value);
+  const h = Number(document.getElementById('canvasH').value);
+  if (o === 'portrait' && w > h) {
+    document.getElementById('canvasW').value = h;
+    document.getElementById('canvasH').value = w;
+  } else if (o === 'landscape' && h > w) {
+    document.getElementById('canvasW').value = h;
+    document.getElementById('canvasH').value = w;
+  } else if (o === 'square') {
+    const s = Math.max(w, h);
+    document.getElementById('canvasW').value = s;
+    document.getElementById('canvasH').value = s;
+  }
+  updateDotInfo();
+}
+
+function updateUnit() {
+  state.unit = document.getElementById('unitSelect').value;
+  document.getElementById('wLabel').textContent = `Width (${state.unit})`;
+  document.getElementById('hLabel').textContent = `Height (${state.unit})`;
+}
+
+// ─── STEP 2 ─────────────────────────────────────────
+function getDimensionsMm() {
+  const w = Number(document.getElementById('canvasW').value) || 320;
+  const h = Number(document.getElementById('canvasH').value) || 160;
+  const u = state.unit;
+  if (u === 'mm') return { w, h };
+  if (u === 'in') return { w: w * 25.4, h: h * 25.4 };
+  if (u === 'px') {
+    const dpi = Number(document.getElementById('dpiSelect').value) || 300;
+    return { w: w / dpi * 25.4, h: h / dpi * 25.4 };
+  }
+  return { w, h };
+}
+
+function updateDotInfo() {
+  const { w, h } = getDimensionsMm();
+  const hDots = Math.floor(w / state.pitch);
+  const vDots = Math.floor(h / state.pitch);
+  document.getElementById('dimInfo').innerHTML =
+    `<b>${hDots} × ${vDots}</b> = ${(hDots*vDots).toLocaleString()} LED dots at ${state.pitch}mm pitch`;
+  updateCanvasSizeLabel();
+  updateStatusBar();
+}
+
+// ─── STEP 3 ─────────────────────────────────────────
+function selectPitch(pitch, dotSize, el) {
+  document.querySelectorAll('.pitch-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.pitch = pitch;
+  state.dotSize = dotSize;
+  document.getElementById('customPitch').value = pitch;
+  document.getElementById('customDot').value = dotSize;
+  document.getElementById('pitchInfo').innerHTML =
+    `<b>P${pitch}: ${pitch}mm pitch, ${dotSize}×${dotSize}mm LED dot</b>`;
+  updateDotInfo();
+  updateStatusBar();
+}
+
+function setCustomPitch() {
+  const p = parseFloat(document.getElementById('customPitch').value) || 2;
+  const d = parseFloat(document.getElementById('customDot').value) || 1.5;
+  state.pitch = p;
+  state.dotSize = d;
+  document.querySelectorAll('.pitch-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('pitchInfo').innerHTML =
+    `<b>Custom: ${p}mm pitch, ${d}×${d}mm LED dot</b>`;
+  updateDotInfo();
+  updateStatusBar();
+}
+
+// ─── STEP 4 ─────────────────────────────────────────
+function setShape(s, btn) {
+  state.shape = s;
+  document.querySelectorAll('#step4 .toggle-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  updateStatusBar();
+}
+
+function updateRadius(v) {
+  state.cornerRadius = Number(v);
+  document.getElementById('radiusVal').textContent = v + '%';
+}
+
+// ─── STEP 5 ─────────────────────────────────────────
+function updateCanvasSizeLabel() {
+  const { w, h } = getDimensionsMm();
+  document.getElementById('canvasSizeLabel').textContent = `${w.toFixed(1)}×${h.toFixed(1)}mm`;
+}
+
+function dragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.add('drag');
+}
+
+function dragLeave(e) {
+  document.getElementById('uploadZone').classList.remove('drag');
+}
+
+function dropFile(e) {
+  e.preventDefault();
+  dragLeave(e);
+  const f = e.dataTransfer.files[0];
+  if (f) processFile(f);
+}
+
+function loadFile(e) {
+  const f = e.target.files[0];
+  if (f) processFile(f);
+}
+
+function processFile(f) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      state.sourceImage = img;
+      document.getElementById('uploadIcon').textContent = '✅';
+      document.getElementById('uploadText').textContent = f.name;
+      document.getElementById('uploadSub').textContent =
+        `${img.width}×${img.height}px — ${(f.size/1024).toFixed(0)}KB`;
+      document.getElementById('uploadZone').classList.add('has-file');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(f);
+}
+
+// ─── GENERATE ─────────────────────────────────────────
+function computeRenderScale(wMm, hMm) {
+  // We want ~4px per mm, but cap total canvas pixels at MAX_CANVAS_PX
+  let scale = 4;
+  while ((wMm * scale > MAX_CANVAS_PX || hMm * scale > MAX_CANVAS_PX) && scale > 1) {
+    scale = scale / 2;
+  }
+  // Minimum 1px per mm
+  if (scale < 1) scale = 1;
+  return scale;
+}
+
+function generateLED() {
+  if (!state.sourceImage) {
+    alert('Please upload a source image first (Step 5).');
+    goStep(5);
+    return;
+  }
+
+  const { w: wMm, h: hMm } = getDimensionsMm();
+  state.dpi = Number(document.getElementById('dpiSelect').value) || 300;
+  state.fitMode = document.getElementById('fitMode').value;
+
+  // Compute safe render scale
+  const scale = computeRenderScale(wMm, hMm);
+  state.pxPerMm = scale;
+
+  const canvasW = Math.round(wMm * scale);
+  const canvasH = Math.round(hMm * scale);
+
+  // Dot & pitch in pixels
+  const pitchPx = state.pitch * scale;
+  const dotPx = state.dotSize * scale;
+
+  const hDots = Math.floor(wMm / state.pitch);
+  const vDots = Math.floor(hMm / state.pitch);
+
+  showSpinner(`GENERATING… ${hDots}×${vDots} = ${(hDots*vDots).toLocaleString()} dots`);
+
+  // Defer to next tick to allow spinner to show
+  setTimeout(() => {
+    try {
+      // Offscreen canvas for the source image
+      const srcCanvas = document.createElement('canvas');
+      srcCanvas.width = canvasW;
+      srcCanvas.height = canvasH;
+      const srcCtx = srcCanvas.getContext('2d');
+
+      // Draw source image with fit mode
+      const img = state.sourceImage;
+      const iw = img.naturalWidth, ih = img.naturalHeight;
+      let sx = 0, sy = 0, sw = iw, sh = ih, dx = 0, dy = 0, dw = canvasW, dh = canvasH;
+
+      if (state.fitMode === 'cover') {
+        const imgR = iw / ih, canR = canvasW / canvasH;
+        if (imgR > canR) { sw = ih * canR; sx = (iw - sw) / 2; }
+        else { sh = iw / canR; sy = (ih - sh) / 2; }
+      } else if (state.fitMode === 'contain') {
+        const imgR = iw / ih, canR = canvasW / canvasH;
+        if (imgR > canR) { dh = canvasW / imgR; dy = (canvasH - dh) / 2; }
+        else { dw = canvasH * imgR; dx = (canvasW - dw) / 2; }
+        srcCtx.fillStyle = '#000';
+        srcCtx.fillRect(0, 0, canvasW, canvasH);
+      }
+
+      srcCtx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+      const srcData = srcCtx.getImageData(0, 0, canvasW, canvasH);
+
+      // Output canvas
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = canvasW;
+      outCanvas.height = canvasH;
+      const outCtx = outCanvas.getContext('2d');
+      outCtx.clearRect(0, 0, canvasW, canvasH);
+
+      // Place source image on output (to be punched through)
+      outCtx.drawImage(srcCanvas, 0, 0);
+
+      // Punch transparent holes using compositing
+      outCtx.globalCompositeOperation = 'destination-out';
+
+      const radius = state.cornerRadius / 100;
+
+      for (let row = 0; row < vDots; row++) {
+        for (let col = 0; col < hDots; col++) {
+          const cx = col * pitchPx + pitchPx / 2;
+          const cy = row * pitchPx + pitchPx / 2;
+          const halfDot = dotPx / 2;
+
+          outCtx.beginPath();
+          if (state.shape === 'circle') {
+            outCtx.arc(cx, cy, halfDot, 0, Math.PI * 2);
+          } else {
+            // Rounded rectangle
+            const x = cx - halfDot, y = cy - halfDot;
+            const r = halfDot * radius;
+            if (r > 0) {
+              outCtx.moveTo(x + r, y);
+              outCtx.lineTo(x + dotPx - r, y);
+              outCtx.arcTo(x + dotPx, y, x + dotPx, y + r, r);
+              outCtx.lineTo(x + dotPx, y + dotPx - r);
+              outCtx.arcTo(x + dotPx, y + dotPx, x + dotPx - r, y + dotPx, r);
+              outCtx.lineTo(x + r, y + dotPx);
+              outCtx.arcTo(x, y + dotPx, x, y + dotPx - r, r);
+              outCtx.lineTo(x, y + r);
+              outCtx.arcTo(x, y, x + r, y, r);
+            } else {
+              outCtx.rect(x, y, dotPx, dotPx);
+            }
+          }
+          outCtx.closePath();
+          outCtx.fill();
+        }
+      }
+
+      outCtx.globalCompositeOperation = 'source-over';
+
+      // Store result
+      state.outputCanvas = outCanvas;
+      state.generated = true;
+
+      // Display
+      const displayCanvas = document.getElementById('mainCanvas');
+      // Limit display size for performance
+      const maxDisplay = Math.min(window.innerWidth - 320, 1200);
+      let dispScale = 1;
+      if (canvasW > maxDisplay) dispScale = maxDisplay / canvasW;
+
+      displayCanvas.width = Math.round(canvasW * dispScale);
+      displayCanvas.height = Math.round(canvasH * dispScale);
+      const dispCtx = displayCanvas.getContext('2d');
+      dispCtx.imageSmoothingEnabled = false;
+      dispCtx.drawImage(outCanvas, 0, 0, displayCanvas.width, displayCanvas.height);
+
+      displayCanvas.style.display = 'block';
+      document.getElementById('placeholder').style.display = 'none';
+
+      // Update hole report
+      const total = hDots * vDots;
+      document.getElementById('hrH').textContent = hDots;
+      document.getElementById('hrV').textContent = vDots;
+      document.getElementById('hrGrid').textContent = `${hDots} × ${vDots}`;
+      document.getElementById('hrPitch').textContent = `${state.pitch}mm`;
+      document.getElementById('hrDot').textContent = `${state.dotSize} × ${state.dotSize}mm`;
+      document.getElementById('hrCanvas').textContent = `${wMm.toFixed(0)} × ${hMm.toFixed(0)}mm`;
+      document.getElementById('hrTotal').textContent = total.toLocaleString();
+      document.getElementById('holeReport').classList.add('visible');
+
+      // Status
+      setStatus('Done');
+      document.getElementById('statDots').textContent = `${hDots} × ${vDots} = ${total.toLocaleString()}`;
+      document.getElementById('sb4').textContent = `${hDots} × ${vDots} = ${total.toLocaleString()}`;
+
+      document.getElementById('btnSave').disabled = false;
+      document.getElementById('btnSaveSep').disabled = false;
+
+      hideSpinner();
+    } catch(err) {
+      hideSpinner();
+      alert('Error generating: ' + err.message);
+      console.error(err);
+    }
+  }, 50);
+}
+
+// ─── STATUS BAR UPDATES ─────────────────────────────────────────
+function updateStatusBar() {
+  const { w, h } = getDimensionsMm();
+  const hDots = Math.floor(w / state.pitch);
+  const vDots = Math.floor(h / state.pitch);
+
+  document.getElementById('statCanvas').textContent = `${w.toFixed(0)}×${h.toFixed(0)}mm`;
+  document.getElementById('statPitch').textContent = `P${state.pitch} / ${state.pitch}mm`;
+  document.getElementById('statDot').textContent = `${state.dotSize}×${state.dotSize}mm`;
+  document.getElementById('statShape').textContent = state.shape === 'circle' ? 'Circle' : 'Square';
+  document.getElementById('sb1').textContent = `${w.toFixed(0)}×${h.toFixed(0)}mm`;
+  document.getElementById('sb2').textContent = `P${state.pitch} / ${state.pitch}mm`;
+  document.getElementById('sb3').textContent = `${state.dotSize}×${state.dotSize}mm`;
+  document.getElementById('sb5').textContent = state.shape === 'circle' ? 'Circle' : 'Square';
+}
+
+function setStatus(s) {
+  document.getElementById('statStatus').textContent = s;
+  document.getElementById('sb6').textContent = s;
+}
+
+// ─── SPINNER ─────────────────────────────────────────
+function showSpinner(msg) {
+  const sp = document.getElementById('spinner');
+  document.getElementById('spinText').textContent = msg || 'GENERATING…';
+  sp.classList.add('show');
+}
+
+function hideSpinner() {
+  document.getElementById('spinner').classList.remove('show');
+}
+
+// ─── EXPORT ─────────────────────────────────────────
+function openExport() {
+  document.getElementById('exportModal').classList.add('open');
+  document.getElementById('exportProgress').classList.remove('visible');
+}
+
+function closeExport() {
+  document.getElementById('exportModal').classList.remove('open');
+}
+
+function selectFormat(f, btn) {
+  state.exportFormat = f;
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function doExport() {
+  const prog = document.getElementById('exportProgress');
+  prog.classList.add('visible');
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressText').textContent = 'Preparing export…';
+
+  setTimeout(() => {
+    document.getElementById('progressFill').style.width = '50%';
+    document.getElementById('progressText').textContent = 'Encoding image…';
+
+    setTimeout(() => {
+      const c = state.outputCanvas;
+      const fmt = state.exportFormat;
+      let mimeType = 'image/png', ext = 'png';
+      let quality = undefined;
+      if (fmt === 'jpg') { mimeType = 'image/jpeg'; ext = 'jpg'; quality = 0.95; }
+      else if (fmt === 'webp') { mimeType = 'image/webp'; ext = 'webp'; quality = 0.95; }
+      else if (fmt === 'bmp') { mimeType = 'image/bmp'; ext = 'bmp'; }
+      else if (fmt === 'tiff') {
+        // TIFF: fallback to PNG (browser doesn't support TIFF export natively)
+        mimeType = 'image/png'; ext = 'tiff';
+      }
+
+      const dataUrl = c.toDataURL(mimeType, quality);
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `led-transparency.${ext}`;
+      a.click();
+
+      document.getElementById('progressFill').style.width = '100%';
+      document.getElementById('progressText').textContent = 'Done!';
+      setTimeout(closeExport, 800);
+    }, 300);
+  }, 100);
+}
+
+// ─── SEPARATE EXPORT ─────────────────────────────────────────
+function openSeparateExport() {
+  const { w: wMm, h: hMm } = getDimensionsMm();
+  const secW = 320, secH = 160;
+  const cols = Math.ceil(wMm / secW);
+  const rows = Math.ceil(hMm / secH);
+  const total = cols * rows;
+
+  document.getElementById('sepModalSub').textContent =
+    `Divides the canvas into 320×160mm sections. Each saved as a separate PNG file.`;
+  document.getElementById('sepInfo').innerHTML =
+    `Canvas: <b>${wMm.toFixed(0)}×${hMm.toFixed(0)}mm</b><br>` +
+    `Columns: <b>${cols}</b> | Rows: <b>${rows}</b><br>` +
+    `Total sections: <b>${total}</b> PNG files`;
+
+  document.getElementById('sepExportModal').classList.add('open');
+  document.getElementById('sepProgress').classList.remove('visible');
+}
+
+function closeSepExport() {
+  document.getElementById('sepExportModal').classList.remove('open');
+}
+
+async function doSeparateExport() {
+  const { w: wMm, h: hMm } = getDimensionsMm();
+  const scale = state.pxPerMm;
+
+  const secWmm = 320, secHmm = 160;
+  const cols = Math.ceil(wMm / secWmm);
+  const rows = Math.ceil(hMm / secHmm);
+  const total = cols * rows;
+
+  const secWpx = Math.round(secWmm * scale);
+  const secHpx = Math.round(secHmm * scale);
+
+  const prog = document.getElementById('sepProgress');
+  prog.classList.add('visible');
+  document.getElementById('sepFill').style.width = '0%';
+  document.getElementById('sepText').textContent = `Exporting 0 / ${total} sections…`;
+
+  const src = state.outputCanvas;
+  let count = 0;
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const sx = col * secWpx;
+      const sy = row * secHpx;
+
+      const sec = document.createElement('canvas');
+      sec.width = secWpx;
+      sec.height = secHpx;
+      const ctx = sec.getContext('2d');
+      ctx.clearRect(0, 0, secWpx, secHpx);
+      ctx.drawImage(src, sx, sy, secWpx, secHpx, 0, 0, secWpx, secHpx);
+
+      const dataUrl = sec.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `section_c${col+1}_r${row+1}_320x160mm.png`;
+      a.click();
+
+      count++;
+      const pct = Math.round(count / total * 100);
+      document.getElementById('sepFill').style.width = pct + '%';
+      document.getElementById('sepText').textContent = `Exporting ${count} / ${total} sections…`;
+
+      // Small delay to avoid browser blocking
+      await new Promise(r => setTimeout(r, 80));
+    }
+  }
+
+  document.getElementById('sepText').textContent = `Done! ${total} files exported.`;
+  setTimeout(closeSepExport, 1500);
+}
+
+// ─── INIT ─────────────────────────────────────────
+updateStatusBar();
+updateDotInfo();
+</script>
+</body>
+</html>
